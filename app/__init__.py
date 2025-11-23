@@ -15,7 +15,7 @@ def create_app():
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-key-for-testing")
     app.config["OUTPUT_DIR"] = os.environ.get("OUTPUT_DIR", "output")
     app.config["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY", "")
-    app.config["OPENAI_MODEL"] = os.environ.get("OPENAI_MODEL", "gpt-4o")
+    app.config["OPENAI_MODEL"] = os.environ.get("OPENAI_MODEL", "gpt-5.1")
 
     # Route definitions
     @app.route("/", methods=["GET", "POST"])
@@ -24,6 +24,7 @@ def create_app():
         endpoints = None
         url_input = request.form.get("url", "")
         request_type = request.form.get("request_type", "GET")
+        cookies = request.form.get("cookies", "")
 
         # Prepend 'http://' if the URL doesn't start with a protocol
         if url_input and not url_input.startswith(("http://", "https://")):
@@ -37,6 +38,7 @@ def create_app():
                     endpoints=endpoints,
                     url_input=url_input,
                     request_type=request_type,
+                    cookies=cookies,
                 )
 
             try:
@@ -51,12 +53,17 @@ def create_app():
                 )
 
                 success, api_results, _ = pipeline.run(
-                    url=url_input, request_type=request_type
+                    url=url_input, request_type=request_type, cookies=cookies
                 )
 
                 if success and api_results:
                     # Use the API results directly instead of loading from file
-                    endpoints = api_results.endpoints
+                    # Sort by usefulness score (highest first)
+                    endpoints = sorted(
+                        api_results.endpoints,
+                        key=lambda x: x.usefulness_score,
+                        reverse=True
+                    )
                 else:
                     flash("Pipeline execution failed. Check logs for details.")
 
@@ -68,6 +75,7 @@ def create_app():
             endpoints=endpoints,
             url_input=url_input,
             request_type=request_type,
+            cookies=cookies,
         )
 
     return app

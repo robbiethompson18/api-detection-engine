@@ -57,13 +57,14 @@ class ApiDetectionPipeline:
             ) = self.headers_file = None
 
     def run(
-        self, url, request_type="GET"
+        self, url, request_type="GET", cookies=None
     ) -> Tuple[bool, Optional[ApiDetectionResults], Dict]:
         """Run the complete pipeline.
 
         Args:
             url: The URL to analyze
             request_type: HTTP method to filter (GET, POST, etc.)
+            cookies: Optional cookie string or list of cookie dicts
 
         Returns:
             tuple: (success, api_detection_results, intermediate_data)
@@ -79,7 +80,9 @@ class ApiDetectionPipeline:
         try:
             # Step 1: Capture HAR
             logger.info("Step 1: Capturing HAR traffic")
-            capture_success, har_data = self.har_capture.capture(url, self.har_file)
+            capture_success, har_data = self.har_capture.capture(
+                url, self.har_file, cookies=cookies
+            )
             if not capture_success:
                 logger.error("HAR capture failed")
                 return False, None, intermediate_data

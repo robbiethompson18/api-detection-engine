@@ -78,7 +78,7 @@ class EndpointAnalyzer:
             logger.error(f"Error during endpoint analysis: {str(e)}")
             return False, []
 
-    def _chunk_data(self, data: Dict, chunk_size: int = 5):
+    def _chunk_data(self, data: Dict, chunk_size: int = 20):
         """Split data into smaller chunks for processing.
 
         Args:
@@ -142,7 +142,7 @@ class EndpointAnalyzer:
             response = self.client.beta.chat.completions.parse(
                 model=self.model,
                 messages=messages,
-                max_tokens=1500,
+                max_completion_tokens=5000,
                 temperature=0.1,
                 response_format=EndpointAnalysisBatch,
             )
